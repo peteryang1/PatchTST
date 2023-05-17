@@ -226,11 +226,10 @@ class Dataset_Custom(Dataset):
         '''
         df_raw.columns: ['date', ...(other features), target feature]
         '''
-        cols = list(df_raw.columns)
-        cols.remove(self.target)
-        cols.remove('date')
-        df_raw = df_raw[['date'] + cols + [self.target]]
-        # print(cols)
+        # cols = list(df_raw.columns)
+        # cols.remove(self.target)
+        # cols.remove('date')
+        # df_raw = df_raw[['date'] + cols + [self.target]]
         num_train = int(len(df_raw) * 0.7)
         num_test = int(len(df_raw) * 0.2)
         num_vali = len(df_raw) - num_train - num_test
@@ -325,14 +324,14 @@ class Dataset_Pred(Dataset):
         '''
         df_raw.columns: ['date', ...(other features), target feature]
         '''
-        if self.cols:
-            cols = self.cols.copy()
-            cols.remove(self.target)
-        else:
-            cols = list(df_raw.columns)
-            cols.remove(self.target)
-            cols.remove('date')
-        df_raw = df_raw[['date'] + cols + [self.target]]
+        # if self.cols:
+        #     cols = self.cols.copy()
+        #     cols.remove(self.target)
+        # else:
+        #     cols = list(df_raw.columns)
+        #     cols.remove(self.target)
+        #     cols.remove('date')
+        # df_raw = df_raw[['date'] + cols + [self.target]]
         border1 = len(df_raw) - self.seq_len
         border2 = len(df_raw)
 

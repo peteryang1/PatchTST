@@ -1,0 +1,12 @@
+PatchTST_supervised/dataset/*
+*.pyc
+*.log
+PatchTST_supervised/checkpoints/*
+PatchTST_supervised/results/*
+PatchTST_supervised/test_results/*
+*.csv
+all_six_datasets/*
+our_align_data.lm.V06.pickle/*
+*.pkl
+*.cfg
+*.zip
