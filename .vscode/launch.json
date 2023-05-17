@@ -5,6 +5,19 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "pretrain patchtst",
+            "type": "python",
+            "request": "launch",
+            "program": "patchtst_pretrain.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "cwd": "/home/xuyang1/PatchTST/PatchTST_self_supervised",
+            "args": [
+                "--dset_pretrain",
+                "quintile_stocka",
+            ]
+        },
+        {
             "name": "train dlinear",
             "type": "python",
             "request": "launch",

@@ -11,3 +11,4 @@ our_align_data.lm.V06.pickle/*
 *.cfg
 *.zip
 result.txt
+*/temp/*

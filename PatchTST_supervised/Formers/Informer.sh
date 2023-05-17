@@ -10,7 +10,7 @@ fi
 random_seed=2021
 model_name=Informer
 
-for pred_len in 96 192 336 720
+for pred_len in 96 192
 do
   python -u run_longExp.py \
     --random_seed $random_seed \
