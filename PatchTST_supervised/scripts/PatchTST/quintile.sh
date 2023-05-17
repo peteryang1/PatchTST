@@ -14,7 +14,7 @@ model_id_name=quintile_stocka
 data_name=custom
 
 random_seed=42
-for pred_len in 96 192 336 720
+for pred_len in 96 192
 do
     python -u run_longExp.py \
       --random_seed $random_seed \
@@ -42,5 +42,6 @@ do
       --patience 20\
       --lradj 'TST'\
       --pct_start 0.2\
+      --freq d\
       --itr 1 --batch_size 24 --learning_rate 0.0001 >logs/LongForecasting/$model_name'_'$model_id_name'_'$seq_len'_'$pred_len.log 
 done

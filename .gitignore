@@ -10,3 +10,4 @@ our_align_data.lm.V06.pickle/*
 *.pkl
 *.cfg
 *.zip
+result.txt
