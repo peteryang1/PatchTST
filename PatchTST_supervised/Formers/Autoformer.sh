@@ -33,7 +33,6 @@ do
     --des 'Exp' \
     --itr 1 \
     --freq d \
-    --do_predict \
-    --train_epochs 1 >logs/LongForecasting/$model_name'_exchange_rate_'$pred_len.log
+    --train_epochs 1 >logs/LongForecasting/$model_name'_quintile_stocka_'$pred_len.log
 done
 

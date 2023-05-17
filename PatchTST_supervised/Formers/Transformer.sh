@@ -10,7 +10,7 @@ fi
 random_seed=2021
 model_name=Transformer
 
-for pred_len in 96 192 336 720
+for pred_len in 96 192
 do
   python -u run_longExp.py \
     --random_seed $random_seed \
@@ -32,6 +32,8 @@ do
     --c_out 578 \
     --des 'Exp' \
     --itr 1 \
-    --train_epochs 1 >logs/LongForecasting/$model_name'_exchange_rate_'$pred_len.log
+    --patience 20\
+    --freq d \
+    --train_epochs 100 >logs/LongForecasting/$model_name'_quintile_stocka_'$pred_len.log
 
 done
