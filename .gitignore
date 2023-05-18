@@ -12,3 +12,4 @@ our_align_data.lm.V06.pickle/*
 *.zip
 result.txt
 */temp/*
+*/saved_models/*
