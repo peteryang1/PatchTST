@@ -6,6 +6,7 @@ all_six_datasets/*
 our_align_data.lm.V06.pickle/*
 */temp/*
 */saved_models/*
+es_data/*
 
 
 *.pyc

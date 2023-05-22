@@ -15,10 +15,13 @@ from src.callback.transforms import *
 from src.metrics import *
 from src.basics import set_device
 from datautils import *
+import random
 
 import argparse
 
 parser = argparse.ArgumentParser()
+# random seed
+parser.add_argument('--random_seed', type=int, default=2021, help='random seed')
 # Pretraining and Finetuning
 parser.add_argument('--is_finetune', type=int, default=0, help='do finetuning or not')
 parser.add_argument('--is_linear_probe', type=int, default=0, help='if linear_probe: only finetune the last layer')
@@ -62,6 +65,12 @@ suffix_name = '_cw'+str(args.context_points)+'_tw'+str(args.target_points) + '_p
 if args.is_finetune: args.save_finetuned_model = args.dset_finetune+'_patchtst_finetuned'+suffix_name
 elif args.is_linear_probe: args.save_finetuned_model = args.dset_finetune+'_patchtst_linear-probe'+suffix_name
 else: args.save_finetuned_model = args.dset_finetune+'_patchtst_finetuned'+suffix_name
+
+# random seed
+fix_seed = args.random_seed
+random.seed(fix_seed)
+torch.manual_seed(fix_seed)
+np.random.seed(fix_seed)
 
 # get available GPU devide
 set_device()

@@ -5,6 +5,29 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "fintune patchtst",
+            "type": "python",
+            "request": "launch",
+            "program": "patchtst_finetune.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "cwd": "/home/xuyang1/PatchTST/PatchTST_self_supervised",
+            "args": [
+                "--is_finetune",
+                "0",
+                "--is_linear_probe",
+                "0",
+                "--dset_finetune",
+                "quintile_stocka",
+                "--batch_size",
+                "24",
+                "--patch_len",
+                "16",
+                "--stride",
+                "8",
+            ]
+        },
+        {
             "name": "pretrain patchtst",
             "type": "python",
             "request": "launch",
@@ -13,8 +36,18 @@
             "justMyCode": false,
             "cwd": "/home/xuyang1/PatchTST/PatchTST_self_supervised",
             "args": [
+                "--n_epochs_pretrain",
+                "100",
+                "--patch_len",
+                "16",
+                "--stride",
+                "8",
+                "--num_workers",
+                "6",
                 "--dset_pretrain",
                 "quintile_stocka",
+                "--batch_size",
+                "24",
             ]
         },
         {

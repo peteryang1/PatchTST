@@ -14,12 +14,15 @@ from src.callback.transforms import *
 from src.metrics import *
 from src.basics import set_device
 from datautils import *
-
+import random
 
 import argparse
 
 parser = argparse.ArgumentParser()
+# random seed
+parser.add_argument('--random_seed', type=int, default=2021, help='random seed')
 # Dataset and dataloader
+
 parser.add_argument('--dset_pretrain', type=str, default='etth1', help='dataset name')
 parser.add_argument('--context_points', type=int, default=512, help='sequence length')
 parser.add_argument('--target_points', type=int, default=96, help='forecast horizon')
@@ -55,6 +58,12 @@ args.save_pretrained_model = 'patchtst_pretrained_cw'+str(args.context_points)+'
 args.save_path = 'saved_models/' + args.dset_pretrain + '/masked_patchtst/' + args.model_type + '/'
 if not os.path.exists(args.save_path): os.makedirs(args.save_path)
 
+
+# random seed
+fix_seed = args.random_seed
+random.seed(fix_seed)
+torch.manual_seed(fix_seed)
+np.random.seed(fix_seed)
 
 # get available GPU devide
 set_device()
