@@ -51,9 +51,9 @@ do
     --e_layers 2 \
     --d_layers 1 \
     --factor 3 \
-    --enc_in 579 \
-    --dec_in 579 \
-    --c_out 579 \
+    --enc_in 578 \
+    --dec_in 578 \
+    --c_out 578 \
     --des 'Exp' \
     --itr 1 \
     --patience 20\
