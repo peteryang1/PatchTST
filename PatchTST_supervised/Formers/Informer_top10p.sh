@@ -10,14 +10,14 @@ fi
 random_seed=2021
 model_name=Informer
 
-for pred_len in 96 192
+for pred_len in 20 60 90 180
 do
   python -u run_longExp.py \
     --random_seed $random_seed \
     --is_training 1 \
     --root_path ./dataset/ \
-    --data_path top10p_stocka.csv \
-    --model_id top10p_stocka_512_$pred_len \
+    --data_path top10p_us.csv \
+    --model_id top10p_us_512_$pred_len \
     --model $model_name \
     --data custom \
     --features M \
@@ -27,13 +27,13 @@ do
     --e_layers 2 \
     --d_layers 1 \
     --factor 3 \
-    --enc_in 578 \
-    --dec_in 578 \
-    --c_out 578 \
+    --enc_in 599 \
+    --dec_in 599 \
+    --c_out 599 \
     --des 'Exp' \
     --itr 1 \
     --patience 20\
     --freq d \
-    --train_epochs 1 >logs/LongForecasting/$model_name'_top10p_stocka_'$pred_len.log
+    --train_epochs 1 >logs/LongForecasting/$model_name'_top10p_us_'$pred_len.log
 
 done
