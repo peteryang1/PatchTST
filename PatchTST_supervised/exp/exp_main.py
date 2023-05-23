@@ -55,7 +55,7 @@ class Exp_Main(Exp_Basic):
         total_loss = []
         self.model.eval()
         with torch.no_grad():
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(vali_loader):
+            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark, y_pred_length) in enumerate(vali_loader):
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float()
 
@@ -84,13 +84,16 @@ class Exp_Main(Exp_Basic):
                         else:
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 f_dim = -1 if self.args.features == 'MS' else 0
-                outputs = outputs[:, -self.args.pred_len:, f_dim:]
-                batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
+                outputs = outputs[:, -self.args.pred_len:, f_dim:].detach().cpu()
+                batch_y = batch_y[:, -self.args.pred_len:, f_dim:].detach().cpu()
 
-                pred = outputs.detach().cpu()
-                true = batch_y.detach().cpu()
+                outputs = [outputs[i,:y_pred_length[i],:] for i in range(len(outputs))]
+                batch_y = [batch_y[i,:y_pred_length[i],:] for i in range(len(batch_y))]
 
-                loss = criterion(pred, true)
+                outputs = torch.concat(outputs, dim=0)
+                batch_y = torch.concat(batch_y, dim=0)
+
+                loss = criterion(outputs, batch_y)
 
                 total_loss.append(loss)
         total_loss = np.average(total_loss)
@@ -129,7 +132,7 @@ class Exp_Main(Exp_Basic):
 
             self.model.train()
             epoch_time = time.time()
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(train_loader):
+            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark, _) in enumerate(train_loader):
                 iter_count += 1
                 model_optim.zero_grad()
                 batch_x = batch_x.float().to(self.device)
@@ -226,13 +229,14 @@ class Exp_Main(Exp_Basic):
         preds = []
         trues = []
         inputx = []
+        pred_lengths = []
         folder_path = './test_results/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
         self.model.eval()
         with torch.no_grad():
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(test_loader):
+            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark, y_pred_length) in enumerate(test_loader):
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float().to(self.device)
 
@@ -272,14 +276,16 @@ class Exp_Main(Exp_Basic):
                 pred = outputs  # outputs.detach().cpu().numpy()  # .squeeze()
                 true = batch_y  # batch_y.detach().cpu().numpy()  # .squeeze()
 
-                preds.append(pred)
-                trues.append(true)
-                inputx.append(batch_x.detach().cpu().numpy())
                 if i % 20 == 0:
                     input = batch_x.detach().cpu().numpy()
                     gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
                     pd = np.concatenate((input[0, :, -1], pred[0, :, -1]), axis=0)
                     visual(gt, pd, os.path.join(folder_path, str(i) + '.pdf'))
+                    
+                preds.append(pred)
+                trues.append(true)
+                inputx.append(batch_x.detach().cpu().numpy())
+                pred_lengths.append(y_pred_length.cpu().numpy())
 
         if self.args.test_flop:
             test_params_flop((batch_x.shape[1],batch_x.shape[2]))
@@ -287,14 +293,21 @@ class Exp_Main(Exp_Basic):
             
         preds = np.concatenate(preds, axis=0)
         trues = np.concatenate(trues, axis=0)
-        inputx = np.concatenate(inputx, axis=0)
+        # inputx = np.concatenate(inputx, axis=0)
+        pred_lengths = np.concatenate(pred_lengths, axis=0)
+
+        preds_without_padding = [preds[i,:pred_lengths[i],:] for i in range(len(preds))]
+        trues_without_padding = [trues[i,:pred_lengths[i],:] for i in range(len(trues))]
+
+        preds_without_padding = np.concatenate(preds_without_padding, axis=0)
+        trues_without_padding = np.concatenate(trues_without_padding, axis=0)
 
         # result save
         folder_path = './results/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
-        mae, mse, rmse, mape, mspe, rse, corr = metric(preds, trues)
+        mae, mse, rmse, mape, mspe, rse, corr = metric(preds_without_padding, trues_without_padding)
         print('mse:{}, mae:{}, rse:{}'.format(mse, mae, rse))
         f = open("result.txt", 'a')
         f.write(setting + "  \n")

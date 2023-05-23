@@ -35,5 +35,29 @@ do
     --patience 20\
     --freq d \
     --train_epochs 100 >logs/LongForecasting/$model_name'_top10p_us_'$pred_len.log
+    
+  python -u run_longExp.py \
+    --random_seed $random_seed \
+    --is_training 1 \
+    --root_path ./dataset/ \
+    --data_path top10p_stocka.csv \
+    --model_id top10p_stocka_512_$pred_len \
+    --model $model_name \
+    --data custom \
+    --features M \
+    --seq_len 512 \
+    --label_len 48 \
+    --pred_len $pred_len \
+    --e_layers 2 \
+    --d_layers 1 \
+    --factor 3 \
+    --enc_in 579 \
+    --dec_in 579 \
+    --c_out 579 \
+    --des 'Exp' \
+    --itr 1 \
+    --patience 20\
+    --freq d \
+    --train_epochs 100 >logs/LongForecasting/$model_name'_top10p_stocka_'$pred_len.log
 
 done

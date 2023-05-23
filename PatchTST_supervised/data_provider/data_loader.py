@@ -280,10 +280,17 @@ class Dataset_Custom(Dataset):
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
 
-        return seq_x, seq_y, seq_x_mark, seq_y_mark
+        pred_length = len(seq_y) - self.label_len
+        if len(seq_y) != self.pred_len + self.label_len:
+            seq_y = np.pad(seq_y,((0,self.pred_len - pred_length),(0,0)))
+            seq_y_mark = np.pad(seq_y_mark,((0,self.pred_len - pred_length),(0,0)))
+        return seq_x, seq_y, seq_x_mark, seq_y_mark, pred_length
 
     def __len__(self):
-        return len(self.data_x) - self.seq_len - self.pred_len + 1
+        if self.set_type == 0:
+            return len(self.data_x) - self.seq_len - self.pred_len + 1
+        else:
+            return len(self.data_x) - self.seq_len + 1
 
     def inverse_transform(self, data):
         return self.scaler.inverse_transform(data)
