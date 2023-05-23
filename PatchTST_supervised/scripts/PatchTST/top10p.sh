@@ -14,7 +14,7 @@ model_id_name=top10p_stocka
 data_name=custom
 
 random_seed=42
-for pred_len in 96 192
+for pred_len in 20 60 90 180
 do
     python -u run_longExp.py \
       --random_seed $random_seed \

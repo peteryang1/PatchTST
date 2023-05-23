@@ -10,7 +10,7 @@ seq_len=512
 model_name=DLinear
 
 
-for pred_len in 96 192 
+for pred_len in 20 60 90 180
 do
     python -u run_longExp.py \
     --is_training 1 \
