@@ -40,7 +40,7 @@ do
       --lradj 'TST'\
       --pct_start 0.2\
       --freq d\
-      --itr 1 --batch_size 24 --learning_rate 0.0001 >logs/LongForecasting/$model_name'_'quintile_us_$seq_len'_'$pred_len.log
+      --itr 1 --batch_size 24 --learning_rate 0.0001 >logs/LongForecasting/$model_name'_'quintile_us_$seq_len'_'$pred_len.log 
       
     python -u run_longExp.py \
       --random_seed $random_seed \

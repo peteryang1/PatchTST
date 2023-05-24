@@ -17,7 +17,7 @@ do
       --random_seed $random_seed \
       --is_training 1 \
       --root_path ./dataset/ \
-      --data_path top10p_stocka.csv \
+      --data_path top10p_us.csv \
       --model_id top10p_us_$seq_len'_'$pred_len \
       --model $model_name \
       --data $data_name \
@@ -46,7 +46,7 @@ do
       --random_seed $random_seed \
       --is_training 1 \
       --root_path ./dataset/ \
-      --data_path top10p_us \
+      --data_path top10p_stocka.csv \
       --model_id top10p_stocka_$seq_len'_'$pred_len \
       --model $model_name \
       --data $data_name \
