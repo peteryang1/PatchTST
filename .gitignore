@@ -17,4 +17,6 @@ es_data/*
 *.zip
 *.png
 *.html
+*.xlsx
 result.txt
+final_result.txt

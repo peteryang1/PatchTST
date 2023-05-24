@@ -8,9 +8,6 @@ fi
 seq_len=512
 model_name=PatchTST
 
-root_path_name=./dataset/
-data_path_name=quintile_stocka.csv
-model_id_name=quintile_stocka
 data_name=custom
 
 random_seed=2021
@@ -19,8 +16,8 @@ do
     python -u run_longExp.py \
       --random_seed $random_seed \
       --is_training 1 \
-      --root_path $root_path_name \
-      --data_path $data_path_name \
+      --root_path ./dataset/ \
+      --data_path quintile_us.csv \
       --model_id quintile_us_$seq_len'_'$pred_len \
       --model $model_name \
       --data $data_name \
@@ -43,13 +40,13 @@ do
       --lradj 'TST'\
       --pct_start 0.2\
       --freq d\
-      --itr 1 --batch_size 24 --learning_rate 0.0001 >logs/LongForecasting/$model_name'_'$model_id_name'_'$seq_len'_'$pred_len.log 
+      --itr 1 --batch_size 24 --learning_rate 0.0001 >logs/LongForecasting/$model_name'_'quintile_us_$seq_len'_'$pred_len.log
       
     python -u run_longExp.py \
       --random_seed $random_seed \
       --is_training 1 \
-      --root_path $root_path_name \
-      --data_path $data_path_name \
+      --root_path ./dataset/ \
+      --data_path quintile_stocka.csv \
       --model_id quintile_stocka_$seq_len'_'$pred_len \
       --model $model_name \
       --data $data_name \
@@ -72,5 +69,5 @@ do
       --lradj 'TST'\
       --pct_start 0.2\
       --freq d\
-      --itr 1 --batch_size 24 --learning_rate 0.0001 >logs/LongForecasting/$model_name'_'$model_id_name'_'$seq_len'_'$pred_len.log 
+      --itr 1 --batch_size 24 --learning_rate 0.0001 >logs/LongForecasting/$model_name'_'quintile_stocka_$seq_len'_'$pred_len.log
 done

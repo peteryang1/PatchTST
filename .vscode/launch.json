@@ -142,7 +142,7 @@
                 "--des",
                 "'Exp'",
                 "--train_epochs",
-                "1",
+                "100",
                 "--patience",
                 "20",
                 "--lradj",
