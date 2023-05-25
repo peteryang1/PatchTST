@@ -16,6 +16,7 @@ es_data/*
 *.cfg
 *.zip
 *.png
+*.jpg
 *.html
 *.xlsx
 result.txt
