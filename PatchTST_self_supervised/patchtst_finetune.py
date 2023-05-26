@@ -42,7 +42,7 @@ parser.add_argument('--revin', type=int, default=1, help='reversible instance no
 parser.add_argument('--n_layers', type=int, default=3, help='number of Transformer layers')
 parser.add_argument('--n_heads', type=int, default=16, help='number of Transformer heads')
 parser.add_argument('--d_model', type=int, default=128, help='Transformer d_model')
-parser.add_argument('--d_ff', type=int, default=256, help='Tranformer MLP dimension')
+parser.add_argument('--d_ff', type=int, default=512, help='Tranformer MLP dimension')
 parser.add_argument('--dropout', type=float, default=0.2, help='Transformer dropout')
 parser.add_argument('--head_dropout', type=float, default=0.2, help='head dropout')
 # Optimization args
@@ -238,9 +238,9 @@ if __name__ == '__main__':
 
     else:
         args.dset = args.dset_finetune
-        weight_path = args.save_path+args.dset_finetune+'_patchtst_finetuned'+suffix_name
+        # weight_path = args.save_path+args.dset_finetune+'_patchtst_finetuned'+suffix_name
         # Test
-        out = test_func(weight_path)        
+        out = test_func(args.pretrained_model)        
         print('----------- Complete! -----------')
 
 
