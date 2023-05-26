@@ -209,8 +209,8 @@ def test_func(weight_path):
     out  = learn.test(dls.test, weight_path=weight_path+'.pth', scores=[mse,mae])         # out: a list of [pred, targ, score]
     print('score:', out[2])
 
-    os.makedirs(args.save_path + args.save_finetuned_model)
-    np.save(args.save_path + args.save_finetuned_model + r'/pred.npy', out[0])
+    os.makedirs(args.pretrained_model)
+    np.save(args.pretrained_model + r'/pred.npy', out[0])
 
     # save results
     pd.DataFrame(np.array(out[2]).reshape(1,-1), columns=['mse','mae']).to_csv(args.save_path + args.save_finetuned_model + '_acc.csv', float_format='%.6f', index=False)
