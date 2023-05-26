@@ -26,9 +26,11 @@
                 "--stride",
                 "8",
                 "--pretrained_model",
-                "/home/xuyang1/PatchTST/PatchTST_self_supervised/saved_models/quintile_stocka/masked_patchtst/based_model/quintile_stocka_patchtst_linear-probe_cw512_tw96_patch16_stride8_epochs-finetune100_model1",
+                "/home/xuyang1/PatchTST/PatchTST_self_supervised/saved_models/quintile_stocka/masked_patchtst/based_model/quintile_stocka_patchtst_finetuned_cw512_tw96_patch16_stride8_epochs-finetune100_model1",
                 "--n_epochs_finetune",
                 "100",
+                "--d_ff",
+                "512",
             ]
         },
         {
