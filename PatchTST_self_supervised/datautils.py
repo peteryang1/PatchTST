@@ -180,7 +180,7 @@ def get_dls(params):
                 datasetCls=Dataset_Custom,
                 dataset_kwargs={
                 'root_path': root_path,
-                'data_path': 'quintile_stocka.csv',
+                'data_path': 'quintile_stocka_pretrain.csv',
                 'features': params.features,
                 'scale': True,
                 'size': size,
@@ -196,7 +196,7 @@ def get_dls(params):
                 datasetCls=Dataset_Custom,
                 dataset_kwargs={
                 'root_path': root_path,
-                'data_path': 'quintile_us.csv',
+                'data_path': 'quintile_us_pretrain.csv',
                 'features': params.features,
                 'scale': True,
                 'size': size,

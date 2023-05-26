@@ -19,5 +19,6 @@ es_data/*
 *.jpg
 *.html
 *.xlsx
+*.npy
 result.txt
 final_result.txt
