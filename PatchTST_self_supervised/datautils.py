@@ -10,7 +10,8 @@ from src.data.datamodule import DataLoaders
 from src.data.pred_dataset import *
 
 DSETS = ['ettm1', 'ettm2', 'etth1', 'etth2', 'electricity',
-         'traffic', 'illness', 'weather', 'exchange', 'quintile_stocka', 'quintile_us'
+         'traffic', 'illness', 'weather', 'exchange', 'quintile_stocka_pretrain',
+         'quintile_us_pretrain', "quintile_stocka_finetune", "quintile_us_finetune", "ff_finetune"
         ]
 
 def get_dls(params):
@@ -173,7 +174,7 @@ def get_dls(params):
                 batch_size=params.batch_size,
                 workers=params.num_workers,
                 )
-    elif params.dset == 'quintile_stocka':
+    elif params.dset == 'quintile_stocka_pretrain':
         root_path = './data/datasets/'
         size = [params.context_points, 0, params.target_points]
         dls = DataLoaders(
@@ -189,7 +190,23 @@ def get_dls(params):
                 batch_size=params.batch_size,
                 workers=params.num_workers,
                 )
-    elif params.dset == 'quintile_us':
+    elif params.dset == 'quintile_stocka_finetune':
+        root_path = './data/datasets/'
+        size = [params.context_points, 0, params.target_points]
+        dls = DataLoaders(
+                datasetCls=Dataset_Custom,
+                dataset_kwargs={
+                'root_path': root_path,
+                'data_path': 'quintile_stocka_finetune.csv',
+                'features': params.features,
+                'scale': True,
+                'size': size,
+                'use_time_features': params.use_time_features
+                },
+                batch_size=params.batch_size,
+                workers=params.num_workers,
+                )
+    elif params.dset == 'quintile_us_pretrain':
         root_path = './data/datasets/'
         size = [params.context_points, 0, params.target_points]
         dls = DataLoaders(
@@ -197,6 +214,38 @@ def get_dls(params):
                 dataset_kwargs={
                 'root_path': root_path,
                 'data_path': 'quintile_us_pretrain.csv',
+                'features': params.features,
+                'scale': True,
+                'size': size,
+                'use_time_features': params.use_time_features
+                },
+                batch_size=params.batch_size,
+                workers=params.num_workers,
+                )
+    elif params.dset == 'quintile_us_finetune':
+        root_path = './data/datasets/'
+        size = [params.context_points, 0, params.target_points]
+        dls = DataLoaders(
+                datasetCls=Dataset_Custom,
+                dataset_kwargs={
+                'root_path': root_path,
+                'data_path': 'quintile_us_finetune.csv',
+                'features': params.features,
+                'scale': True,
+                'size': size,
+                'use_time_features': params.use_time_features
+                },
+                batch_size=params.batch_size,
+                workers=params.num_workers,
+                )
+    elif params.dset == 'ff_finetune':
+        root_path = './data/datasets/'
+        size = [params.context_points, 0, params.target_points]
+        dls = DataLoaders(
+                datasetCls=Dataset_Custom,
+                dataset_kwargs={
+                'root_path': root_path,
+                'data_path': 'ff_finetune.csv',
                 'features': params.features,
                 'scale': True,
                 'size': size,

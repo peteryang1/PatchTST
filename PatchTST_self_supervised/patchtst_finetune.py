@@ -198,7 +198,7 @@ def linear_probe_func(lr=args.lr):
     save_recorders(learn)
 
 
-def test_func(weight_path):
+def test_func(weight_path, dump_pred=False):
     # get dataloader
     dls = get_dls(args)
     model = get_model(dls.vars, args, head_type='prediction').to('cuda')
@@ -209,8 +209,10 @@ def test_func(weight_path):
     out  = learn.test(dls.test, weight_path=weight_path+'.pth', scores=[mse,mae])         # out: a list of [pred, targ, score]
     print('score:', out[2])
 
-    os.makedirs(args.pretrained_model)
-    np.save(args.pretrained_model + r'/pred.npy', out[0])
+    if dump_pred:
+        os.makedirs(args.pretrained_model, exist_ok=True)
+        print(args.pretrained_model + r'/pred.npy')
+        np.save(args.pretrained_model + r'/pred.npy', out[0])
 
     # save results
     pd.DataFrame(np.array(out[2]).reshape(1,-1), columns=['mse','mae']).to_csv(args.save_path + args.save_finetuned_model + '_acc.csv', float_format='%.6f', index=False)
@@ -244,7 +246,7 @@ if __name__ == '__main__':
         args.dset = args.dset_finetune
         # weight_path = args.save_path+args.dset_finetune+'_patchtst_finetuned'+suffix_name
         # Test
-        out = test_func(args.pretrained_model)        
+        out = test_func(args.pretrained_model, dump_pred=True)        
         print('----------- Complete! -----------')
 
 
