@@ -17,8 +17,8 @@ do
       --random_seed $random_seed \
       --is_training 1 \
       --root_path ./dataset/ \
-      --data_path ff_finetune.csv \
-      --model_id ff_finetune_$seq_len'_'$pred_len \
+      --data_path ff_data.csv \
+      --model_id ff_data_$seq_len'_'$pred_len \
       --model $model_name \
       --data $data_name \
       --features M \
@@ -40,5 +40,5 @@ do
       --lradj 'TST'\
       --pct_start 0.2\
       --freq d\
-      --itr 1 --batch_size 24 --learning_rate 0.0001 >logs/LongForecasting/$model_name'_'ff_finetune_$seq_len'_'$pred_len.log 
+      --itr 1 --batch_size 24 --learning_rate 0.0001 >logs/LongForecasting/$model_name'_'ff_data_$seq_len'_'$pred_len.log 
 done

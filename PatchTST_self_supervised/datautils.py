@@ -11,7 +11,7 @@ from src.data.pred_dataset import *
 
 DSETS = ['ettm1', 'ettm2', 'etth1', 'etth2', 'electricity',
          'traffic', 'illness', 'weather', 'exchange', 'quintile_stocka_pretrain',
-         'quintile_us_pretrain', "quintile_stocka_finetune", "quintile_us_finetune", "ff_finetune"
+         'quintile_us_pretrain', "quintile_stocka_finetune", "quintile_us_finetune", "ff_data"
         ]
 
 def get_dls(params):
@@ -238,14 +238,14 @@ def get_dls(params):
                 batch_size=params.batch_size,
                 workers=params.num_workers,
                 )
-    elif params.dset == 'ff_finetune':
+    elif params.dset == 'ff_data':
         root_path = './data/datasets/'
         size = [params.context_points, 0, params.target_points]
         dls = DataLoaders(
                 datasetCls=Dataset_Custom,
                 dataset_kwargs={
                 'root_path': root_path,
-                'data_path': 'ff_finetune.csv',
+                'data_path': 'ff_data.csv',
                 'features': params.features,
                 'scale': True,
                 'size': size,
