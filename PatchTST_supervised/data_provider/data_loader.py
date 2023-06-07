@@ -252,6 +252,11 @@ class Dataset_Custom(Dataset):
             data = self.scaler.transform(df_data.values)
         else:
             data = df_data.values
+        
+        # import pickle
+        # pickle.dump(self.scaler, open(os.path.join(self.root_path, self.data_path).replace(".csv", "_scaler.pkl"), 'wb'))
+        # pickle.dump(data, open(os.path.join(self.root_path, self.data_path).replace(".csv", "_transformed.pkl"), 'wb'))
+        # exit()
 
         df_stamp = df_raw[['date']][border1:border2]
         df_stamp['date'] = pd.to_datetime(df_stamp.date)
