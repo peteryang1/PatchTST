@@ -154,7 +154,7 @@
                 "--patience",
                 "20",
                 "--lradj",
-                "'TST'",
+                "TST",
                 "--pct_start",
                 "0.2",
                 "--freq",
