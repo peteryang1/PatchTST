@@ -126,6 +126,7 @@ class Exp_Main(Exp_Basic):
                                             epochs = self.args.train_epochs,
                                             max_lr = self.args.learning_rate)
 
+        global_steps = 0
         for epoch in range(self.args.train_epochs):
             iter_count = 0
             train_loss = []
@@ -197,22 +198,24 @@ class Exp_Main(Exp_Basic):
                     adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args, printout=False)
                     scheduler.step()
 
-            print("Epoch: {} cost time: {}".format(epoch + 1, time.time() - epoch_time))
-            train_loss = np.average(train_loss)
-            vali_loss = self.vali(vali_data, vali_loader, criterion)
-            test_loss = self.vali(test_data, test_loader, criterion)
+                blobal_steps = epoch * len(train_loader) + i + 1
+                if blobal_steps % 1000 == 0:
+                    print("Epoch: {} iters: {} cost time: {}".format(epoch + 1, blobal_steps, time.time() - epoch_time))
+                    train_loss = np.average(train_loss)
+                    vali_loss = self.vali(vali_data, vali_loader, criterion)
+                    test_loss = self.vali(test_data, test_loader, criterion)
 
-            print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
-                epoch + 1, train_steps, train_loss, vali_loss, test_loss))
-            early_stopping(vali_loss, self.model, path)
-            if early_stopping.early_stop:
-                print("Early stopping")
-                break
+                    print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
+                        epoch + 1, train_steps, train_loss, vali_loss, test_loss))
+                    early_stopping(vali_loss, self.model, path)
+                    if early_stopping.early_stop:
+                        print("Early stopping")
+                        break
 
-            if self.args.lradj != 'TST':
-                adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args)
-            else:
-                print('Updating learning rate to {}'.format(scheduler.get_last_lr()[0]))
+                    if self.args.lradj != 'TST':
+                        adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args)
+                    else:
+                        print('Updating learning rate to {}'.format(scheduler.get_last_lr()[0]))
 
         best_model_path = path + '/' + 'checkpoint.pth'
         self.model.load_state_dict(torch.load(best_model_path))
