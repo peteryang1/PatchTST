@@ -20,5 +20,6 @@ es_data/*
 *.html
 *.xlsx
 *.npy
+*.pth
 result.txt
 final_result.txt
