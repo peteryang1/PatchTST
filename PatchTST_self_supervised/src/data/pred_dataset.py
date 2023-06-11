@@ -419,7 +419,7 @@ def _torch(*dfs):
 
 
 class Dataset_1min(Dataset):
-    def __init__(self, root_path, flag='train', size=None,
+    def __init__(self, root_path, split='train', size=None,
                  features='S', data_path='ETTh1.csv',
                  target='OT', scale=False, timeenc=1, freq='T', **kwargs):
         # size [seq_len, label_len, pred_len]
@@ -433,9 +433,9 @@ class Dataset_1min(Dataset):
             self.label_len = size[1]
             self.pred_len = size[2]
         # init
-        assert flag in ['train', 'test', 'val']
+        assert split in ['train', 'test', 'val']
         type_map = {'train': 0, 'val': 1, 'test': 2}
-        self.set_type = type_map[flag]
+        self.set_type = type_map[split]
 
         self.features = features
         self.target = target
