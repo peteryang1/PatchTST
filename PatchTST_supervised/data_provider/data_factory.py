@@ -43,6 +43,8 @@ def data_provider(args, flag):
         freq=freq
     )
     print(flag, len(data_set))
+    if flag == "val" or flag == "test":
+        batch_size = batch_size * 20
     data_loader = DataLoader(
         data_set,
         batch_size=batch_size,

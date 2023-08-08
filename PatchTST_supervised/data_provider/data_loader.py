@@ -367,12 +367,13 @@ class Dataset_1min(Dataset):
         s_end = s_begin + self.seq_len
         r_begin = s_end - self.label_len
         r_end = r_begin + self.label_len + self.pred_len
-        seq_x = self.data[s_begin:s_end]
-        seq_y = self.data[r_begin:r_end]
+        seq_x = self.data[s_begin:s_end].copy()
+        seq_y = self.data[r_begin:r_end].copy()
         seq_x_mark = self.data_stamp[s_begin:s_end]
         seq_y_mark = self.data_stamp[r_begin:r_end]
 
         pred_length = len(seq_y) - self.label_len
+        # seq_y[-10:,:5] = np.cumsum(seq_y[-10:,:5], axis=0)
         return seq_x, seq_y, seq_x_mark, seq_y_mark, pred_length
 
     def __len__(self):

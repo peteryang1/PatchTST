@@ -16,6 +16,7 @@ from src.metrics import *
 from src.basics import set_device
 from datautils import *
 import random
+import wandb
 
 import argparse
 
@@ -53,15 +54,24 @@ parser.add_argument('--pretrained_model', type=str, default=None, help='pretrain
 # model id to keep track of the number of models saved
 parser.add_argument('--finetuned_model_id', type=int, default=1, help='id of the saved finetuned model')
 parser.add_argument('--model_type', type=str, default='based_model', help='for multivariate model or univariate model')
+parser.add_argument('--root_path', type=str, default='.', help='to locate the dataset')
 
 
 args = parser.parse_args()
 print('args:', args)
-args.save_path = 'saved_models/' + args.dset_finetune + '/masked_patchtst/' + args.model_type + '/'
+args.save_path = args.root_path + '/saved_models/' + args.dset_finetune + '/masked_patchtst/' + args.model_type + '/finetune/'
 if not os.path.exists(args.save_path): os.makedirs(args.save_path)
 
+wandb.init(
+    # set the wandb project where this run will be logged
+    project="patchtst_1min_finetune",
+    
+    # track hyperparameters and run metadata
+    config=args
+)
+
 # args.save_finetuned_model = '_cw'+str(args.context_points)+'_tw'+str(args.target_points) + '_patch'+str(args.patch_len) + '_stride'+str(args.stride) + '_epochs-finetune' + str(args.n_epochs_finetune) + '_mask' + str(args.mask_ratio)  + '_model' + str(args.finetuned_model_id)
-suffix_name = '_cw'+str(args.context_points)+'_tw'+str(args.target_points) + '_patch'+str(args.patch_len) + '_stride'+str(args.stride) + '_epochs-finetune' + str(args.n_epochs_finetune) + '_model' + str(args.finetuned_model_id)
+suffix_name = '_cw'+str(args.context_points)+'_tw'+str(args.target_points) + '_patch'+str(args.patch_len) + '_stride'+str(args.stride) + '_epochs-finetune' + str(args.n_epochs_finetune) + '_model' + str(args.finetuned_model_id) + '_n_layers' + str(args.n_layers)
 if args.is_finetune: args.save_finetuned_model = args.dset_finetune+'_patchtst_finetuned'+suffix_name
 elif args.is_linear_probe: args.save_finetuned_model = args.dset_finetune+'_patchtst_linear-probe'+suffix_name
 else: args.save_finetuned_model = args.dset_finetune+'_patchtst_finetuned'+suffix_name
@@ -165,7 +175,7 @@ def finetune_func(lr=args.lr):
                         )                            
     # fit the data to the model
     #learn.fit_one_cycle(n_epochs=args.n_epochs_finetune, lr_max=lr)
-    learn.fine_tune(n_epochs=args.n_epochs_finetune, base_lr=lr, freeze_epochs=10)
+    learn.fine_tune(n_epochs=args.n_epochs_finetune, base_lr=lr, freeze_epochs=args.n_epochs_finetune)
     save_recorders(learn)
 
 

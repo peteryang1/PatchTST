@@ -4,6 +4,7 @@ import torch
 from exp.exp_main import Exp_Main
 import random
 import numpy as np
+import wandb
 
 parser = argparse.ArgumentParser(description='Autoformer & Transformer family for Time Series Forecasting')
 
@@ -112,6 +113,14 @@ print('Args in experiment:')
 print(args)
 
 Exp = Exp_Main
+
+wandb.init(
+    # set the wandb project where this run will be logged
+    project="patchtst_1min_supervised",
+    
+    # track hyperparameters and run metadata
+    config=args
+)
 
 if args.is_training:
     for ii in range(args.itr):

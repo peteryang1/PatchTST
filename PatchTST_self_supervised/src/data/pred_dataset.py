@@ -420,8 +420,8 @@ def _torch(*dfs):
 
 class Dataset_1min(Dataset):
     def __init__(self, root_path, split='train', size=None,
-                 features='S', data_path='ETTh1.csv',
-                 target='OT', scale=False, timeenc=1, freq='T', **kwargs):
+                 data_path='ETTh1.csv', timeenc=1, freq='T', 
+                 **kwargs):
         # size [seq_len, label_len, pred_len]
         # info
         if size == None:
@@ -437,9 +437,6 @@ class Dataset_1min(Dataset):
         type_map = {'train': 0, 'val': 1, 'test': 2}
         self.set_type = type_map[split]
 
-        self.features = features
-        self.target = target
-        self.scale = scale
         self.timeenc = timeenc
         self.freq = freq
 
@@ -454,7 +451,6 @@ class Dataset_1min(Dataset):
         self.__read_data__()
 
     def __read_data__(self):
-        self.scaler = StandardScaler()
         df_raw : pd.DataFrame = pickle.load(open(os.path.join(self.root_path,self.data_path), 'rb')).sort_index()
         assert(len(df_raw) % 240 == 0), "len(df_raw) % 240 != 0"
         self.frame_count = len(df_raw) // 240
@@ -495,4 +491,4 @@ class Dataset_1min(Dataset):
         return self.frame_count * self.frame_batch_count
 
     def inverse_transform(self, data):
-        return self.scaler.inverse_transform(data)
+        raise NotImplementedError

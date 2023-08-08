@@ -16,6 +16,8 @@ import time
 import warnings
 import matplotlib.pyplot as plt
 import numpy as np
+from tqdm import tqdm
+import wandb
 
 warnings.filterwarnings('ignore')
 
@@ -58,7 +60,7 @@ class Exp_Main(Exp_Basic):
         total_loss = []
         self.model.eval()
         with torch.no_grad():
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark, y_pred_length) in enumerate(vali_loader):
+            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark, y_pred_length) in tqdm(enumerate(vali_loader), "validating", total=len(vali_loader)):
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float()
 
@@ -97,7 +99,6 @@ class Exp_Main(Exp_Basic):
                 batch_y = torch.concat(batch_y, dim=0)
 
                 loss = criterion(outputs, batch_y)
-
                 total_loss.append(loss)
         total_loss = np.average(total_loss)
         self.model.train()
@@ -184,6 +185,7 @@ class Exp_Main(Exp_Basic):
 
                     if (i + 1) % 100 == 0:
                         print("\titers: {0}, epoch: {1} | loss: {2:.7f}".format(i + 1, epoch + 1, loss.item()))
+
                         speed = (time.time() - time_now) / iter_count
                         left_time = speed * ((self.args.train_epochs - epoch) * train_steps - i)
                         print('\tspeed: {:.4f}s/iter; left time: {:.4f}s'.format(speed, left_time))
@@ -196,21 +198,25 @@ class Exp_Main(Exp_Basic):
                         scaler.update()
                     else:
                         loss.backward()
+                        # torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1)
                         model_optim.step()
                         
                     if self.args.lradj == 'TST':
                         adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args, printout=False)
                         scheduler.step()
 
-                    blobal_steps = epoch * len(train_loader) + i + 1
-                    if blobal_steps % 1000 == 0:
-                        print("Epoch: {} iters: {} cost time: {}".format(epoch + 1, blobal_steps, time.time() - epoch_time))
+                    global_steps = epoch * len(train_loader) + i + 1
+                    if global_steps % 1000 == 0:
+                        print("Epoch: {} iters: {} cost time: {}".format(epoch + 1, global_steps, time.time() - epoch_time))
                         train_loss_valid = np.average(train_loss)
                         vali_loss = self.vali(vali_data, vali_loader, criterion)
-                        test_loss = self.vali(test_data, test_loader, criterion)
+                        # test_loss = self.vali(test_data, test_loader, criterion)
+                        test_loss = 0
 
                         print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
                             epoch + 1, train_steps, train_loss_valid, vali_loss, test_loss))
+                        
+                        wandb.log({'train_loss': train_loss_valid,'valid_loss': float(vali_loss),}, step=global_steps, commit=True)
                         early_stopping(vali_loss, self.model, path)
                         if early_stopping.early_stop:
                             print("Early stopping")

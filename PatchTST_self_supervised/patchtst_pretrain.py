@@ -15,6 +15,7 @@ from src.metrics import *
 from src.basics import set_device
 from datautils import *
 import random
+import wandb
 
 import argparse
 
@@ -50,13 +51,22 @@ parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
 # model id to keep track of the number of models saved
 parser.add_argument('--pretrained_model_id', type=int, default=1, help='id of the saved pretrained model')
 parser.add_argument('--model_type', type=str, default='based_model', help='for multivariate model or univariate model')
+parser.add_argument('--root_path', type=str, default='.', help='to locate the dataset')
 
 
 args = parser.parse_args()
 print('args:', args)
-args.save_pretrained_model = 'patchtst_pretrained_cw'+str(args.context_points)+'_patch'+str(args.patch_len) + '_stride'+str(args.stride) + '_epochs-pretrain' + str(args.n_epochs_pretrain) + '_mask' + str(args.mask_ratio)  + '_model' + str(args.pretrained_model_id)
-args.save_path = 'saved_models/' + args.dset_pretrain + '/masked_patchtst/' + args.model_type + '/'
+args.save_pretrained_model = 'patchtst_pretrained_cw'+str(args.context_points)+'_patch'+str(args.patch_len) + '_stride'+str(args.stride) + '_epochs-pretrain' + str(args.n_epochs_pretrain) + '_mask' + str(args.mask_ratio)  + '_model' + str(args.pretrained_model_id) + '_n_layers' + str(args.n_layers)
+args.save_path = args.root_path + '/saved_models/' + args.dset_pretrain + '/masked_patchtst/' + args.model_type + '/'
 if not os.path.exists(args.save_path): os.makedirs(args.save_path)
+
+wandb.init(
+    # set the wandb project where this run will be logged
+    project="patchtst_1min_pretrain",
+    
+    # track hyperparameters and run metadata
+    config=args
+)
 
 
 # random seed

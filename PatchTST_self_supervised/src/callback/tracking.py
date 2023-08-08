@@ -7,6 +7,7 @@ import torch
 import time
 import numpy as np
 from pathlib import Path
+import wandb
 
 
 class TrackTimerCB(Callback):
@@ -103,6 +104,7 @@ class TrackTrainingCB(Callback):
         values = self.compute_scores()           
         # save training loss after one epoch                
         self.recorder['train_loss'].append( values['loss'] )
+        wandb.log({'train_loss': values['loss'],}, step=self.learner.train_it_all, commit=True)
         # save metrics after one epoch         
         if self.train_metrics:
             for name, func in zip(self.metric_names, self.metrics): 
@@ -114,6 +116,9 @@ class TrackTrainingCB(Callback):
         if not self.learner.dls.valid: return
         values = self.compute_scores()                
         # save training loss after one epoch
+        if self.learner.epoch_finished_when_valid == False:
+            wandb.log({'valid_loss': values['loss'],}, step=self.learner.train_it_all, commit=True)
+            return
         self.recorder['valid_loss'].append( values['loss'] )
         # save metrics after one epoch         
         if self.valid_metrics:

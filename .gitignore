@@ -23,3 +23,6 @@ es_data/*
 *.pth
 result.txt
 final_result.txt
+
+*/wandb/*
+local_project/*

@@ -12,7 +12,7 @@ from src.data.pred_dataset import *
 DSETS = ['ettm1', 'ettm2', 'etth1', 'etth2', 'electricity',
          'traffic', 'illness', 'weather', 'exchange', 'quintile_stocka_pretrain',
          'quintile_us_pretrain', "quintile_stocka_finetune", "quintile_us_finetune", "ff_data", "1min",'quintile_stocka',
-         'quintile_us',
+         'quintile_us', '1min_csi500_small', '1min_csi500', '1min_csi800', '1min_all'
         ]
 
 def get_dls(params):
@@ -287,16 +287,23 @@ def get_dls(params):
                 batch_size=params.batch_size,
                 workers=params.num_workers,
                 )
-    elif params.dset == '1min':
-        root_path = './data/datasets/'
+    elif params.dset == '1min' or params.dset == '1min_csi500_small' or params.dset == '1min_csi500' or params.dset == '1min_csi800' or params.dset == '1min_all':
+        if params.dset == '1min':
+            root_path = rf'{params.root_path}/data/datasets/'
+        elif params.dset == '1min_csi500_small':
+            root_path = rf'{params.root_path}/data/datasets/1min/csi500_small/'
+        elif params.dset == '1min_csi500':
+            root_path = rf'{params.root_path}/data/datasets/1min/csi500/'
+        elif params.dset == '1min_csi800':
+            root_path = rf'{params.root_path}/data/datasets/1min/csi800/'
+        elif params.dset == '1min_all':
+            root_path = rf'{params.root_path}/data/datasets/1min/all/'
         size = [params.context_points, 0, params.target_points]
         dls = DataLoaders(
                 datasetCls=Dataset_1min,
                 dataset_kwargs={
                 'root_path': root_path,
                 'data_path': 'preprocessed_dataset',
-                'features': params.features,
-                'scale': True,
                 'size': size,
                 'use_time_features': False
                 },
