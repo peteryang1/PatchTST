@@ -15,10 +15,14 @@ from src.callback.transforms import *
 from src.metrics import *
 from src.basics import set_device
 from datautils import *
+import random
+import wandb
 
 import argparse
 
 parser = argparse.ArgumentParser()
+# random seed
+parser.add_argument('--random_seed', type=int, default=2021, help='random seed')
 # Pretraining and Finetuning
 parser.add_argument('--is_finetune', type=int, default=0, help='do finetuning or not')
 parser.add_argument('--is_linear_probe', type=int, default=0, help='if linear_probe: only finetune the last layer')
@@ -36,12 +40,12 @@ parser.add_argument('--stride', type=int, default=12, help='stride between patch
 # RevIN
 parser.add_argument('--revin', type=int, default=1, help='reversible instance normalization')
 # Model args
-parser.add_argument('--n_layers', type=int, default=3, help='number of Transformer layers')
+parser.add_argument('--n_layers', type=int, default=1, help='number of Transformer layers')
 parser.add_argument('--n_heads', type=int, default=16, help='number of Transformer heads')
 parser.add_argument('--d_model', type=int, default=128, help='Transformer d_model')
 parser.add_argument('--d_ff', type=int, default=256, help='Tranformer MLP dimension')
 parser.add_argument('--dropout', type=float, default=0.2, help='Transformer dropout')
-parser.add_argument('--head_dropout', type=float, default=0.2, help='head dropout')
+parser.add_argument('--head_dropout', type=float, default=0, help='head dropout')
 # Optimization args
 parser.add_argument('--n_epochs_finetune', type=int, default=20, help='number of finetuning epochs')
 parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
@@ -50,18 +54,33 @@ parser.add_argument('--pretrained_model', type=str, default=None, help='pretrain
 # model id to keep track of the number of models saved
 parser.add_argument('--finetuned_model_id', type=int, default=1, help='id of the saved finetuned model')
 parser.add_argument('--model_type', type=str, default='based_model', help='for multivariate model or univariate model')
+parser.add_argument('--root_path', type=str, default='.', help='to locate the dataset')
 
 
 args = parser.parse_args()
 print('args:', args)
-args.save_path = 'saved_models/' + args.dset_finetune + '/masked_patchtst/' + args.model_type + '/'
+args.save_path = args.root_path + '/saved_models/' + args.dset_finetune + '/masked_patchtst/' + args.model_type + '/finetune/'
 if not os.path.exists(args.save_path): os.makedirs(args.save_path)
 
+wandb.init(
+    # set the wandb project where this run will be logged
+    project="patchtst_1min_finetune",
+    
+    # track hyperparameters and run metadata
+    config=args
+)
+
 # args.save_finetuned_model = '_cw'+str(args.context_points)+'_tw'+str(args.target_points) + '_patch'+str(args.patch_len) + '_stride'+str(args.stride) + '_epochs-finetune' + str(args.n_epochs_finetune) + '_mask' + str(args.mask_ratio)  + '_model' + str(args.finetuned_model_id)
-suffix_name = '_cw'+str(args.context_points)+'_tw'+str(args.target_points) + '_patch'+str(args.patch_len) + '_stride'+str(args.stride) + '_epochs-finetune' + str(args.n_epochs_finetune) + '_model' + str(args.finetuned_model_id)
+suffix_name = '_cw'+str(args.context_points)+'_tw'+str(args.target_points) + '_patch'+str(args.patch_len) + '_stride'+str(args.stride) + '_epochs-finetune' + str(args.n_epochs_finetune) + '_model' + str(args.finetuned_model_id) + '_n_layers' + str(args.n_layers)
 if args.is_finetune: args.save_finetuned_model = args.dset_finetune+'_patchtst_finetuned'+suffix_name
 elif args.is_linear_probe: args.save_finetuned_model = args.dset_finetune+'_patchtst_linear-probe'+suffix_name
 else: args.save_finetuned_model = args.dset_finetune+'_patchtst_finetuned'+suffix_name
+
+# random seed
+fix_seed = args.random_seed
+random.seed(fix_seed)
+torch.manual_seed(fix_seed)
+np.random.seed(fix_seed)
 
 # get available GPU devide
 set_device()
@@ -156,7 +175,7 @@ def finetune_func(lr=args.lr):
                         )                            
     # fit the data to the model
     #learn.fit_one_cycle(n_epochs=args.n_epochs_finetune, lr_max=lr)
-    learn.fine_tune(n_epochs=args.n_epochs_finetune, base_lr=lr, freeze_epochs=10)
+    learn.fine_tune(n_epochs=args.n_epochs_finetune, base_lr=lr, freeze_epochs=args.n_epochs_finetune)
     save_recorders(learn)
 
 
@@ -189,7 +208,7 @@ def linear_probe_func(lr=args.lr):
     save_recorders(learn)
 
 
-def test_func(weight_path):
+def test_func(weight_path, dump_pred=False):
     # get dataloader
     dls = get_dls(args)
     model = get_model(dls.vars, args, head_type='prediction').to('cuda')
@@ -199,6 +218,12 @@ def test_func(weight_path):
     learn = Learner(dls, model,cbs=cbs)
     out  = learn.test(dls.test, weight_path=weight_path+'.pth', scores=[mse,mae])         # out: a list of [pred, targ, score]
     print('score:', out[2])
+
+    if dump_pred:
+        os.makedirs(args.pretrained_model, exist_ok=True)
+        print(args.pretrained_model + r'/pred.npy')
+        np.save(args.pretrained_model + r'/pred.npy', out[0])
+
     # save results
     pd.DataFrame(np.array(out[2]).reshape(1,-1), columns=['mse','mae']).to_csv(args.save_path + args.save_finetuned_model + '_acc.csv', float_format='%.6f', index=False)
     return out
@@ -229,9 +254,9 @@ if __name__ == '__main__':
 
     else:
         args.dset = args.dset_finetune
-        weight_path = args.save_path+args.dset_finetune+'_patchtst_finetuned'+suffix_name
+        # weight_path = args.save_path+args.dset_finetune+'_patchtst_finetuned'+suffix_name
         # Test
-        out = test_func(weight_path)        
+        out = test_func(args.pretrained_model, dump_pred=True)        
         print('----------- Complete! -----------')
 
 

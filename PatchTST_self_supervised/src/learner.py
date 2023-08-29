@@ -43,6 +43,8 @@ class Learner(GetAttr):
         self.initialize_callbacks(cbs)        
         # Indicator of running lr_finder
         self.run_finder = False
+        self.train_it_all = 0
+        self.epoch_finished_when_valid = True
 
     def set_opt(self):
         if self.model:
@@ -132,9 +134,17 @@ class Learner(GetAttr):
 
     def all_batches(self, type_):
         # for self.num,self.batch in enumerate(progress_bar(dl, leave=False)):        
-        for num, batch in enumerate(self.dl):            
+        for num, batch in tqdm(enumerate(self.dl), total=len(self.dl)):       
+            if type_ == 'train' and self.train_it_all % 4000 == 0:
+                self.epoch_finished_when_valid = False
+                self.epoch_validate()
+                self.model.train()
+                self.epoch_finished_when_valid = True         
+                self('before_epoch_train')
             self.iter, self.batch = num, batch            
-            if type_ == 'train': self.batch_train()
+            if type_ == 'train': 
+                self.train_it_all += 1
+                self.batch_train()
             elif type_ == 'valid': self.batch_validate()
             elif type_ == 'predict': self.batch_predict()             
             elif type_ == 'test': self.batch_test()

@@ -16,8 +16,13 @@ import time
 import warnings
 import matplotlib.pyplot as plt
 import numpy as np
+from tqdm import tqdm
+import wandb
 
 warnings.filterwarnings('ignore')
+
+class EarlyStoppingException(Exception):
+    pass
 
 class Exp_Main(Exp_Basic):
     def __init__(self, args):
@@ -55,7 +60,7 @@ class Exp_Main(Exp_Basic):
         total_loss = []
         self.model.eval()
         with torch.no_grad():
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(vali_loader):
+            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in tqdm(enumerate(vali_loader), "validating", total=len(vali_loader)):
                 batch_x = batch_x.float().to(self.device)
                 batch_y = batch_y.float()
 
@@ -84,14 +89,16 @@ class Exp_Main(Exp_Basic):
                         else:
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 f_dim = -1 if self.args.features == 'MS' else 0
-                outputs = outputs[:, -self.args.pred_len:, f_dim:]
-                batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
+                outputs = outputs[:, -self.args.pred_len:, f_dim:].detach().cpu()
+                batch_y = batch_y[:, -self.args.pred_len:, f_dim:].detach().cpu()
 
-                pred = outputs.detach().cpu()
-                true = batch_y.detach().cpu()
+                # outputs = [outputs[i,:y_pred_length[i],:] for i in range(len(outputs))]
+                # batch_y = [batch_y[i,:y_pred_length[i],:] for i in range(len(batch_y))]
 
-                loss = criterion(pred, true)
+                outputs = torch.concat(outputs, dim=0)
+                batch_y = torch.concat(batch_y, dim=0)
 
+                loss = criterion(outputs, batch_y)
                 total_loss.append(loss)
         total_loss = np.average(total_loss)
         self.model.train()
@@ -123,93 +130,105 @@ class Exp_Main(Exp_Basic):
                                             epochs = self.args.train_epochs,
                                             max_lr = self.args.learning_rate)
 
+        global_steps = 0
         for epoch in range(self.args.train_epochs):
             iter_count = 0
             train_loss = []
 
             self.model.train()
             epoch_time = time.time()
-            for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(train_loader):
-                iter_count += 1
-                model_optim.zero_grad()
-                batch_x = batch_x.float().to(self.device)
+            try:
+                for i, (batch_x, batch_y, batch_x_mark, batch_y_mark, _) in enumerate(train_loader):
+                    iter_count += 1
+                    model_optim.zero_grad()
+                    batch_x = batch_x.float().to(self.device)
 
-                batch_y = batch_y.float().to(self.device)
-                batch_x_mark = batch_x_mark.float().to(self.device)
-                batch_y_mark = batch_y_mark.float().to(self.device)
+                    batch_y = batch_y.float().to(self.device)
+                    batch_x_mark = batch_x_mark.float().to(self.device)
+                    batch_y_mark = batch_y_mark.float().to(self.device)
 
-                # decoder input
-                dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
-                dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
+                    # decoder input
+                    dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
+                    dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
 
-                # encoder - decoder
-                if self.args.use_amp:
-                    with torch.cuda.amp.autocast():
+                    # encoder - decoder
+                    if self.args.use_amp:
+                        with torch.cuda.amp.autocast():
+                            if 'Linear' in self.args.model or 'TST' in self.args.model:
+                                outputs = self.model(batch_x)
+                            else:
+                                if self.args.output_attention:
+                                    outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+                                else:
+                                    outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+
+                            f_dim = -1 if self.args.features == 'MS' else 0
+                            outputs = outputs[:, -self.args.pred_len:, f_dim:]
+                            batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
+                            loss = criterion(outputs, batch_y)
+                            train_loss.append(loss.item())
+                    else:
                         if 'Linear' in self.args.model or 'TST' in self.args.model:
-                            outputs = self.model(batch_x)
+                                outputs = self.model(batch_x)
                         else:
                             if self.args.output_attention:
                                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
+                                
                             else:
-                                outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
-
+                                outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark, batch_y)
+                        # print(outputs.shape,batch_y.shape)
                         f_dim = -1 if self.args.features == 'MS' else 0
                         outputs = outputs[:, -self.args.pred_len:, f_dim:]
                         batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
                         loss = criterion(outputs, batch_y)
                         train_loss.append(loss.item())
-                else:
-                    if 'Linear' in self.args.model or 'TST' in self.args.model:
-                            outputs = self.model(batch_x)
+
+                    if (i + 1) % 100 == 0:
+                        print("\titers: {0}, epoch: {1} | loss: {2:.7f}".format(i + 1, epoch + 1, loss.item()))
+
+                        speed = (time.time() - time_now) / iter_count
+                        left_time = speed * ((self.args.train_epochs - epoch) * train_steps - i)
+                        print('\tspeed: {:.4f}s/iter; left time: {:.4f}s'.format(speed, left_time))
+                        iter_count = 0
+                        time_now = time.time()
+
+                    if self.args.use_amp:
+                        scaler.scale(loss).backward()
+                        scaler.step(model_optim)
+                        scaler.update()
                     else:
-                        if self.args.output_attention:
-                            outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
-                            
+                        loss.backward()
+                        # torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1)
+                        model_optim.step()
+                        
+                    if self.args.lradj == 'TST':
+                        adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args, printout=False)
+                        scheduler.step()
+
+                    global_steps = epoch * len(train_loader) + i + 1
+                    if global_steps % 1000 == 0:
+                        print("Epoch: {} iters: {} cost time: {}".format(epoch + 1, global_steps, time.time() - epoch_time))
+                        train_loss_valid = np.average(train_loss)
+                        vali_loss = self.vali(vali_data, vali_loader, criterion)
+                        # test_loss = self.vali(test_data, test_loader, criterion)
+                        test_loss = 0
+
+                        print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
+                            epoch + 1, train_steps, train_loss_valid, vali_loss, test_loss))
+                        
+                        wandb.log({'train_loss': train_loss_valid,'valid_loss': float(vali_loss),}, step=global_steps, commit=True)
+                        early_stopping(vali_loss, self.model, path)
+                        if early_stopping.early_stop:
+                            print("Early stopping")
+                            raise EarlyStoppingException
+
+                        if self.args.lradj != 'TST':
+                            adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args)
                         else:
-                            outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark, batch_y)
-                    # print(outputs.shape,batch_y.shape)
-                    f_dim = -1 if self.args.features == 'MS' else 0
-                    outputs = outputs[:, -self.args.pred_len:, f_dim:]
-                    batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
-                    loss = criterion(outputs, batch_y)
-                    train_loss.append(loss.item())
-
-                if (i + 1) % 100 == 0:
-                    print("\titers: {0}, epoch: {1} | loss: {2:.7f}".format(i + 1, epoch + 1, loss.item()))
-                    speed = (time.time() - time_now) / iter_count
-                    left_time = speed * ((self.args.train_epochs - epoch) * train_steps - i)
-                    print('\tspeed: {:.4f}s/iter; left time: {:.4f}s'.format(speed, left_time))
-                    iter_count = 0
-                    time_now = time.time()
-
-                if self.args.use_amp:
-                    scaler.scale(loss).backward()
-                    scaler.step(model_optim)
-                    scaler.update()
-                else:
-                    loss.backward()
-                    model_optim.step()
-                    
-                if self.args.lradj == 'TST':
-                    adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args, printout=False)
-                    scheduler.step()
-
-            print("Epoch: {} cost time: {}".format(epoch + 1, time.time() - epoch_time))
-            train_loss = np.average(train_loss)
-            vali_loss = self.vali(vali_data, vali_loader, criterion)
-            test_loss = self.vali(test_data, test_loader, criterion)
-
-            print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
-                epoch + 1, train_steps, train_loss, vali_loss, test_loss))
-            early_stopping(vali_loss, self.model, path)
-            if early_stopping.early_stop:
-                print("Early stopping")
+                            print('Updating learning rate to {}'.format(scheduler.get_last_lr()[0]))
+            except EarlyStoppingException:
+                print('Early stopping outer loop')
                 break
-
-            if self.args.lradj != 'TST':
-                adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args)
-            else:
-                print('Updating learning rate to {}'.format(scheduler.get_last_lr()[0]))
 
         best_model_path = path + '/' + 'checkpoint.pth'
         self.model.load_state_dict(torch.load(best_model_path))
@@ -226,6 +245,7 @@ class Exp_Main(Exp_Basic):
         preds = []
         trues = []
         inputx = []
+        # pred_lengths = []
         folder_path = './test_results/' + setting + '/'
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
@@ -272,25 +292,34 @@ class Exp_Main(Exp_Basic):
                 pred = outputs  # outputs.detach().cpu().numpy()  # .squeeze()
                 true = batch_y  # batch_y.detach().cpu().numpy()  # .squeeze()
 
-                preds.append(pred)
-                trues.append(true)
-                inputx.append(batch_x.detach().cpu().numpy())
                 if i % 20 == 0:
                     input = batch_x.detach().cpu().numpy()
                     gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
                     pd = np.concatenate((input[0, :, -1], pred[0, :, -1]), axis=0)
                     visual(gt, pd, os.path.join(folder_path, str(i) + '.pdf'))
+                    
+                preds.append(pred)
+                trues.append(true)
+                inputx.append(batch_x.detach().cpu().numpy())
+                # pred_lengths.append(y_pred_length.cpu().numpy())
 
         if self.args.test_flop:
             test_params_flop((batch_x.shape[1],batch_x.shape[2]))
             exit()
-        preds = np.array(preds)
-        trues = np.array(trues)
-        inputx = np.array(inputx)
+            
+        preds = np.concatenate(preds, axis=0)
+        trues = np.concatenate(trues, axis=0)
+        # inputx = np.concatenate(inputx, axis=0)
+        # pred_lengths = np.concatenate(pred_lengths, axis=0)
 
-        preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
-        trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
-        inputx = inputx.reshape(-1, inputx.shape[-2], inputx.shape[-1])
+        # preds_without_padding = [preds[i,:pred_lengths[i],:] for i in range(len(preds))]
+        # trues_without_padding = [trues[i,:pred_lengths[i],:] for i in range(len(trues))]
+
+        # preds_without_padding = np.concatenate(preds_without_padding, axis=0)
+        # trues_without_padding = np.concatenate(trues_without_padding, axis=0)
+
+        preds = np.concatenate(preds, axis=0)
+        trues = np.concatenate(trues, axis=0)
 
         # result save
         folder_path = './results/' + setting + '/'

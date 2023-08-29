@@ -10,7 +10,9 @@ from src.data.datamodule import DataLoaders
 from src.data.pred_dataset import *
 
 DSETS = ['ettm1', 'ettm2', 'etth1', 'etth2', 'electricity',
-         'traffic', 'illness', 'weather', 'exchange'
+         'traffic', 'illness', 'weather', 'exchange', 'quintile_stocka_pretrain',
+         'quintile_us_pretrain', "quintile_stocka_finetune", "quintile_us_finetune", "ff_data", "1min",'quintile_stocka',
+         'quintile_us', '1min_csi500_small', '1min_csi500', '1min_csi800', '1min_all'
         ]
 
 def get_dls(params):
@@ -107,7 +109,7 @@ def get_dls(params):
                 )
 
     elif params.dset == 'traffic':
-        root_path = '/data/datasets/public/traffic/'
+        root_path = './data/datasets/'
         size = [params.context_points, 0, params.target_points]
         dls = DataLoaders(
                 datasetCls=Dataset_Custom,
@@ -169,6 +171,141 @@ def get_dls(params):
                 'scale': True,
                 'size': size,
                 'use_time_features': params.use_time_features
+                },
+                batch_size=params.batch_size,
+                workers=params.num_workers,
+                )
+    elif params.dset == 'quintile_stocka':
+        root_path = './data/datasets/'
+        size = [params.context_points, 0, params.target_points]
+        dls = DataLoaders(
+                datasetCls=Dataset_Custom,
+                dataset_kwargs={
+                'root_path': root_path,
+                'data_path': 'quintile_stocka.csv',
+                'features': params.features,
+                'scale': True,
+                'size': size,
+                'use_time_features': params.use_time_features
+                },
+                batch_size=params.batch_size,
+                workers=params.num_workers,
+                )
+    elif params.dset == 'quintile_us':
+        root_path = './data/datasets/'
+        size = [params.context_points, 0, params.target_points]
+        dls = DataLoaders(
+                datasetCls=Dataset_Custom,
+                dataset_kwargs={
+                'root_path': root_path,
+                'data_path': 'quintile_us.csv',
+                'features': params.features,
+                'scale': True,
+                'size': size,
+                'use_time_features': params.use_time_features
+                },
+                batch_size=params.batch_size,
+                workers=params.num_workers,
+                )
+    elif params.dset == 'quintile_stocka_pretrain':
+        root_path = './data/datasets/'
+        size = [params.context_points, 0, params.target_points]
+        dls = DataLoaders(
+                datasetCls=Dataset_Custom,
+                dataset_kwargs={
+                'root_path': root_path,
+                'data_path': 'quintile_stocka_pretrain.csv',
+                'features': params.features,
+                'scale': True,
+                'size': size,
+                'use_time_features': params.use_time_features
+                },
+                batch_size=params.batch_size,
+                workers=params.num_workers,
+                )
+    elif params.dset == 'quintile_stocka_finetune':
+        root_path = './data/datasets/'
+        size = [params.context_points, 0, params.target_points]
+        dls = DataLoaders(
+                datasetCls=Dataset_Custom,
+                dataset_kwargs={
+                'root_path': root_path,
+                'data_path': 'quintile_stocka_finetune.csv',
+                'features': params.features,
+                'scale': True,
+                'size': size,
+                'use_time_features': params.use_time_features
+                },
+                batch_size=params.batch_size,
+                workers=params.num_workers,
+                )
+    elif params.dset == 'quintile_us_pretrain':
+        root_path = './data/datasets/'
+        size = [params.context_points, 0, params.target_points]
+        dls = DataLoaders(
+                datasetCls=Dataset_Custom,
+                dataset_kwargs={
+                'root_path': root_path,
+                'data_path': 'quintile_us_pretrain.csv',
+                'features': params.features,
+                'scale': True,
+                'size': size,
+                'use_time_features': params.use_time_features
+                },
+                batch_size=params.batch_size,
+                workers=params.num_workers,
+                )
+    elif params.dset == 'quintile_us_finetune':
+        root_path = './data/datasets/'
+        size = [params.context_points, 0, params.target_points]
+        dls = DataLoaders(
+                datasetCls=Dataset_Custom,
+                dataset_kwargs={
+                'root_path': root_path,
+                'data_path': 'quintile_us_finetune.csv',
+                'features': params.features,
+                'scale': True,
+                'size': size,
+                'use_time_features': params.use_time_features
+                },
+                batch_size=params.batch_size,
+                workers=params.num_workers,
+                )
+    elif params.dset == 'ff_data':
+        root_path = './data/datasets/'
+        size = [params.context_points, 0, params.target_points]
+        dls = DataLoaders(
+                datasetCls=Dataset_Custom,
+                dataset_kwargs={
+                'root_path': root_path,
+                'data_path': 'ff_data.csv',
+                'features': params.features,
+                'scale': True,
+                'size': size,
+                'use_time_features': params.use_time_features
+                },
+                batch_size=params.batch_size,
+                workers=params.num_workers,
+                )
+    elif params.dset == '1min' or params.dset == '1min_csi500_small' or params.dset == '1min_csi500' or params.dset == '1min_csi800' or params.dset == '1min_all':
+        if params.dset == '1min':
+            root_path = rf'{params.root_path}/data/datasets/'
+        elif params.dset == '1min_csi500_small':
+            root_path = rf'{params.root_path}/data/datasets/1min/csi500_small/'
+        elif params.dset == '1min_csi500':
+            root_path = rf'{params.root_path}/data/datasets/1min/csi500/'
+        elif params.dset == '1min_csi800':
+            root_path = rf'{params.root_path}/data/datasets/1min/csi800/'
+        elif params.dset == '1min_all':
+            root_path = rf'{params.root_path}/data/datasets/1min/all/'
+        size = [params.context_points, 0, params.target_points]
+        dls = DataLoaders(
+                datasetCls=Dataset_1min,
+                dataset_kwargs={
+                'root_path': root_path,
+                'data_path': 'preprocessed_dataset',
+                'size': size,
+                'use_time_features': False
                 },
                 batch_size=params.batch_size,
                 workers=params.num_workers,

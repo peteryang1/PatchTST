@@ -14,12 +14,16 @@ from src.callback.transforms import *
 from src.metrics import *
 from src.basics import set_device
 from datautils import *
-
+import random
+import wandb
 
 import argparse
 
 parser = argparse.ArgumentParser()
+# random seed
+parser.add_argument('--random_seed', type=int, default=2021, help='random seed')
 # Dataset and dataloader
+
 parser.add_argument('--dset_pretrain', type=str, default='etth1', help='dataset name')
 parser.add_argument('--context_points', type=int, default=512, help='sequence length')
 parser.add_argument('--target_points', type=int, default=96, help='forecast horizon')
@@ -33,12 +37,12 @@ parser.add_argument('--stride', type=int, default=12, help='stride between patch
 # RevIN
 parser.add_argument('--revin', type=int, default=1, help='reversible instance normalization')
 # Model args
-parser.add_argument('--n_layers', type=int, default=3, help='number of Transformer layers')
+parser.add_argument('--n_layers', type=int, default=1, help='number of Transformer layers')
 parser.add_argument('--n_heads', type=int, default=16, help='number of Transformer heads')
 parser.add_argument('--d_model', type=int, default=128, help='Transformer d_model')
-parser.add_argument('--d_ff', type=int, default=512, help='Tranformer MLP dimension')
+parser.add_argument('--d_ff', type=int, default=256, help='Tranformer MLP dimension')
 parser.add_argument('--dropout', type=float, default=0.2, help='Transformer dropout')
-parser.add_argument('--head_dropout', type=float, default=0.2, help='head dropout')
+parser.add_argument('--head_dropout', type=float, default=0, help='head dropout')
 # Pretrain mask
 parser.add_argument('--mask_ratio', type=float, default=0.4, help='masking ratio for the input')
 # Optimization args
@@ -47,14 +51,29 @@ parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
 # model id to keep track of the number of models saved
 parser.add_argument('--pretrained_model_id', type=int, default=1, help='id of the saved pretrained model')
 parser.add_argument('--model_type', type=str, default='based_model', help='for multivariate model or univariate model')
+parser.add_argument('--root_path', type=str, default='.', help='to locate the dataset')
 
 
 args = parser.parse_args()
 print('args:', args)
-args.save_pretrained_model = 'patchtst_pretrained_cw'+str(args.context_points)+'_patch'+str(args.patch_len) + '_stride'+str(args.stride) + '_epochs-pretrain' + str(args.n_epochs_pretrain) + '_mask' + str(args.mask_ratio)  + '_model' + str(args.pretrained_model_id)
-args.save_path = 'saved_models/' + args.dset_pretrain + '/masked_patchtst/' + args.model_type + '/'
+args.save_pretrained_model = 'patchtst_pretrained_cw'+str(args.context_points)+'_patch'+str(args.patch_len) + '_stride'+str(args.stride) + '_epochs-pretrain' + str(args.n_epochs_pretrain) + '_mask' + str(args.mask_ratio)  + '_model' + str(args.pretrained_model_id) + '_n_layers' + str(args.n_layers)
+args.save_path = args.root_path + '/saved_models/' + args.dset_pretrain + '/masked_patchtst/' + args.model_type + '/'
 if not os.path.exists(args.save_path): os.makedirs(args.save_path)
 
+wandb.init(
+    # set the wandb project where this run will be logged
+    project="patchtst_1min_pretrain",
+    
+    # track hyperparameters and run metadata
+    config=args
+)
+
+
+# random seed
+fix_seed = args.random_seed
+random.seed(fix_seed)
+torch.manual_seed(fix_seed)
+np.random.seed(fix_seed)
 
 # get available GPU devide
 set_device()
